@@ -11,28 +11,30 @@ typedef struct bbox{
 
 class Node{
     public:
-        Node* children[4];
+        Node* children[8];
         double mass;
-        double cm_x, cm_y;
-        double vx, vy;
+        double cm_x, cm_y, cm_z;
+        double vx, vy, vz;
         Bbox* bbox;
 
         Node(){
-            for(int k = 0; k<4; ++k) children[k] = nullptr;
+            for(int k = 0; k<8; ++k) children[k] = nullptr;
 
             mass = 0;
+
             cm_x = 0;
             cm_y = 0;
+            cm_z = 0;
         }
 
         ~Node(){
-            for(int k = 0; k<4; ++k) delete children[k];
+            for(int k = 0; k<8; ++k) delete children[k];
             
             delete bbox;
         }
 
         bool is_children_null(){
-            for(int k = 0; k<4; ++k){
+            for(int k = 0; k<8; ++k){
                 if( children[k]!=nullptr ) return false;
             }
             return true;
@@ -40,9 +42,9 @@ class Node{
 };
 void integrate(star* galaxy, int& nb_star, double& dt, double& T);
 Bbox* find_root_bbox(star* galaxy, int& nb_star);
-void quad_insert(Node* root, double& x, double& y, double& m);
-int quadrant_of_particle(Bbox* bbox, double& x, double& y);
+void quad_insert(Node* root, double& x, double& y, double& z, double& m);
+int quadrant_of_particle(Bbox* bbox, double& x, double& y, double& z);
 Bbox* quadrant_bbox(Bbox* bbox, int& quadrant);
-void compute_force(Node* root, double& x, double& y, double& m, double* force);
+void compute_force(Node* root, double& x, double& y, double& z, double& m, double* force);
 
 #endif // BARNES_HUT_H

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <time.h>
 
-void saveMass(star* stars, int nb_star);
+void saveMass(star* stars, int nb_star); 
 
 void saveStar(star* stars, int nb_star);
 

@@ -15,17 +15,19 @@ void saveStar(star* stars, int nb_star) {
     int size = 3;
     int height = 1800;
     int width = 1800;
-    int x, y;
+    int depth = 1800;
+    int x, y, z;
     char name[90];
     sprintf(name, "./data/sav_%i", cpt_save);
     FILE* f = fopen(name, "w+");
     star s;
-    fprintf(f, "x;y\n");
+    fprintf(f, "x;y;z\n");
     for(int i = 0; i<nb_star; i++) {
         s = stars[i];
         x = (s.x/size * width/2)+ width/2;
         y = (s.y/size * height/2) + height/2;
-        fprintf(f, "%i;%i\n", x, y);    
+        z = (s.z/size * depth/2) + depth/2;
+        fprintf(f, "%i;%i;%i\n", x, y, z);    
     }
 
     ++cpt_save;

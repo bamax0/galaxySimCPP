@@ -59,17 +59,22 @@ void initStarCircle(star* tab_star, int nb_star, double dt) {
     double pi = 3.14159265358;
     for(int j = 0; j<nb_star; j++){
         i = j +.2;
-        r = 2*sqrt((double)i/nb_star);
+        r = 3*sqrt((double)i/nb_star);
         theta = pi*(1 + sqrt(5)) * i;
         
         tab_star[j].x = r*cos(theta);
         tab_star[j].y = r*sin(theta);
+        tab_star[j].y = 0;
+
         tab_star[j].vx = -0.94/r*sin(theta);
         tab_star[j].vy = 0.94/r*cos(theta);
+        tab_star[j].vz = 0;
+
         u = 4*getRandomValue() + 0.2;
         tab_star[j].mass = (double)u/nb_star;
         tab_star[j].ax = 0;
         tab_star[j].ay = 0;
+        tab_star[j].az = 0;
     }
     
     tab_star[0].mass = (double)10000./nb_star;
@@ -80,17 +85,23 @@ void initStarCircle(star* tab_star, int nb_star, double dt) {
 }
 
 void initStarUniverse(star* tab_star, int nb_star, double dt) {
+    float size = 2;
+    float speed = 0.2;
     for(int j = 0; j<nb_star; j++){
         
-        tab_star[j].x = getRandomeValueBetween(-15, 15);
-        tab_star[j].y = getRandomeValueBetween(-15, 15);
+        tab_star[j].x = getRandomeValueBetween(-size, size);
+        tab_star[j].y = getRandomeValueBetween(-size, size);
+        tab_star[j].z = getRandomeValueBetween(-0.2, 0.2);
 
         tab_star[j].mass = (double)getRandomeValueBetween(0.2, 7)/nb_star;
         
-        tab_star[j].vx = getRandomeValueBetween(-0.2, 0.2);
-        tab_star[j].vy = getRandomeValueBetween(-0.2, 0.2);
+        tab_star[j].vx = getRandomeValueBetween(-speed, speed);
+        tab_star[j].vy = getRandomeValueBetween(-speed, speed);
+        tab_star[j].vz = getRandomeValueBetween(-speed, speed);
+        
         tab_star[j].ax = 0;
         tab_star[j].ay = 0;
+        tab_star[j].az = 0;
         if( getRandomeValueBetween(0, 1000) < 1 ) tab_star[j].mass = getRandomeValueBetween(15, 1000)/nb_star;
     }
 }
