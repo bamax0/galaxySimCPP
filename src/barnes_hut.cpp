@@ -1,0 +1,216 @@
+#include "barnes_hut.h"
+using namespace std;
+
+double softening = 0.08;
+double theta = 0.5;
+double softening2 = softening*softening;
+
+
+void quad_insert(Node* root, double& x, double& y, double& m){
+    double root_mass = root->mass;
+    if( root_mass == 0 ){
+        root->mass = m;
+        root->cm_x = x;
+        root->cm_y = y;
+    } else if(root->is_children_null()){
+        int old_quadrant = quadrant_of_particle(root->bbox, root->cm_x, root->cm_y);
+        root->children[old_quadrant] = new Node();
+        root->children[old_quadrant]->bbox = quadrant_bbox(root->bbox, old_quadrant);
+        quad_insert(root->children[old_quadrant], root->cm_x, root->cm_y, root_mass);
+        int new_quadrant = quadrant_of_particle(root->bbox, x, y);
+        if( root->children[new_quadrant] == NULL ) {
+            root->children[new_quadrant] = new Node();
+            root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
+        }
+        quad_insert(root->children[new_quadrant], x, y, m);
+        root->cm_x = (root->cm_x*root_mass + x*m) / (root_mass + m);
+        root->cm_y = (root->cm_y*root_mass + y*m) / (root_mass + m);
+        root->mass = root_mass + m;
+    } else {
+        int new_quadrant = quadrant_of_particle(root->bbox, x, y);
+        if( root->children[new_quadrant] == nullptr ) {
+            root->children[new_quadrant] = new Node();
+            root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
+        }
+        quad_insert(root->children[new_quadrant], x, y, m);
+        root->cm_x = (root->cm_x*root_mass + x*m) / (root_mass + m);
+        root->cm_y = (root->cm_y*root_mass + y*m) / (root_mass + m);
+        root->mass = root_mass + m;
+    }
+
+}
+
+void integrate(star* galaxy, int& nb_star, double& dt, double& T) {
+    double *partricles_force_x = new double[nb_star];
+    double *partricles_force_y = new double[nb_star];
+    double *force  = new double[2];
+    double dt_2 = dt/2;
+    double size = 5;
+    int cptCapt = 2;
+    int cpt = 0;
+    time_t begin = time(NULL);
+    star s;
+    int minute;
+    saveMass(galaxy, nb_star);
+
+    cout << "start" << endl;
+    for(double t=0; t<T; t+=dt) {
+        Node* root = new Node;
+        root->bbox = find_root_bbox(galaxy, nb_star);
+        for( int i=0; i<nb_star; ++i){
+            s = galaxy[i];
+            quad_insert(root, s.x, s.y, s.mass);
+        }
+        for( int i=0; i<nb_star; ++i){
+            s = galaxy[i];
+            compute_force(root, s.x, s.y, s.mass, force);
+            partricles_force_x[i] = force[0];
+            partricles_force_y[i] = force[1];
+        }
+        for( int i=0; i<nb_star; ++i) {
+            double fx = partricles_force_x[i];
+            double fy = partricles_force_y[i];
+
+            star* s = &galaxy[i];
+
+            s->vx += s->ax*dt_2;
+            s->vy += s->ay*dt_2;
+
+            s->ax = fx / s->mass;
+            s->ay = fy / s->mass;
+
+            s->vx += s->ax*dt_2;
+            s->vy += s->ay*dt_2;
+
+            s->x += s->vx*dt;
+            s->y += s->vy*dt;
+
+        }
+        if(cpt%cptCapt == 0) {
+            time_t end = time(NULL);
+            if(t){
+                minute = (int)(end-begin)*(T/t-1);
+                cout <<  (int)(t/T*10000)/100. << "\% time left: " 
+                << (int)(minute/60/60) << "h " << (minute/60)%60 
+                << "m (time :" << (int)(end-begin)/60 << "m )" << endl;
+
+            }
+            saveStar(galaxy, nb_star);
+        }
+        ++cpt;
+        delete root;
+
+    }
+    delete[] partricles_force_x;
+    delete[] partricles_force_y;
+    delete[] force;
+}
+
+
+void compute_force(Node* root, double& x, double& y, double& m, double* force) {
+    force[0] = 0;
+    force[1] = 0;
+    if( root->mass == 0 ) return;
+    if( root->cm_x == x && root->cm_y == y ) return;
+
+    double d = root->bbox->x2 - root->bbox->x1;
+
+    double dx = root->cm_x - x;
+    double dy = root->cm_y - y;
+    double r2 = dx*dx + dy*dy + softening2;
+    double inv_r = invsqrtQuake(r2*r2*r2);
+    if(d*inv_r*r2 < theta || root->is_children_null()){
+        double norm_f = m*root->mass*inv_r;
+        force[0] = norm_f*dx;
+        force[1] = norm_f*dy;
+    } else {
+        double *force2 = new double[2];
+        Node **children = root->children;
+        for(int i=0; i<4; ++i){
+            if( children[i] != nullptr ) {
+                compute_force(children[i], x, y ,m, force2);
+                force[0] += force2[0];
+                force[1] += force2[1];
+            }
+        }
+        delete[] force2;
+    }
+}
+
+Bbox* find_root_bbox(star* galaxy, int& nb_star) {
+    double xmin = galaxy[0].x;
+    double xmax = xmin;
+    double ymin = galaxy[0].y;
+    double ymax = ymin;
+    double x, y;
+    for(int i=0; i<nb_star; ++i){
+        x = galaxy[i].x;
+        y = galaxy[i].y;
+        if( x > xmax ) xmax = x;
+        if( x < xmin ) xmin = x;
+        if( y > ymax ) ymax = y;
+        if( y < ymin ) ymin = y;
+    }
+    Bbox* b = new Bbox();
+    b->x1 = xmin;
+    b->y1 = ymin;
+    double delta_x = xmax - xmin;
+    double delta_y = ymax - ymin;
+
+    if( delta_x == delta_y ) {
+        b->x2 = xmax;
+        b->y2 = ymax;
+    } else if( delta_x > delta_y ){
+        b->x2 = xmax;
+        b->y2 = ymax+(delta_x-delta_y);
+    } else {
+        b->x2 = xmax+(delta_y-delta_x);
+        b->y2 = ymax;
+    }
+    return b;
+}
+
+
+int quadrant_of_particle(Bbox* bbox, double& x, double& y) {
+    if( 2*y >= bbox->y2 + bbox->y1 ) {
+        if( 2*x <= bbox->x2 + bbox->x1 ) return 0;
+        else return 1;
+    } else {
+        if( 2*x >= bbox->x2 + bbox->x1 ) return 2;
+        else return 3;
+    }
+}
+
+Bbox* quadrant_bbox(Bbox* bbox, int& quadrant){
+    Bbox* b = new Bbox();
+    double x = (bbox->x1 + bbox->x2)/2.;
+    double y = (bbox->y1 + bbox->y2)/2.;
+    // Quadrant 0: (xmin, x, y, ymax)
+    switch(quadrant) {
+        case 0:
+            b->x1 = bbox->x1;
+            b->x2 = x;
+            b->y1 = y;
+            b->y2 = bbox->y2;
+            break;
+        case 1:
+            b->x1 = x;
+            b->x2 = bbox->x2;
+            b->y1 = y;
+            b->y2 = bbox->y2;
+            break;
+        case 2:
+            b->x1 = x;
+            b->x2 = bbox->x2;
+            b->y1 = bbox->y1;
+            b->y2 = y;
+            break;
+        case 3:
+            b->x1 = bbox->x1;
+            b->x2 = x;
+            b->y1 = bbox->y1;
+            b->y2 = y;
+            break;
+    }
+    return b;
+}
