@@ -3,17 +3,11 @@
 
 typedef struct star
 {
-    double x;
-    double y;
-    double z;
+    double x, y, z;
     
-    double vx;
-    double vy;
-    double vz;
+    double vx, vy, vz;
 
-    double ax;
-    double ay;
-    double az;
+    double ax, ay, az;
 
     double mass;
 }star;

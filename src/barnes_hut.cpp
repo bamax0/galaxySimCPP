@@ -1,7 +1,7 @@
 #include "barnes_hut.h"
 using namespace std;
 
-double softening = 0.08;
+double softening = 0.1;
 double theta = 0.5;
 double softening2 = softening*softening;
 
@@ -44,15 +44,15 @@ void quad_insert(Node* root, double& x, double& y, double& z, double& m){
 }
 
 void integrate(star* galaxy, int& nb_star, double& dt, double& T) {
+    double dt_2 = dt/2;
+    int cptCapt = 10;
+    int cpt = 0;
+
+    double *force  = new double[3];
     double *partricles_force_x = new double[nb_star];
     double *partricles_force_y = new double[nb_star];
     double *partricles_force_z = new double[nb_star];
 
-    double *force  = new double[3];
-    double dt_2 = dt/2;
-    double size = 5;
-    int cptCapt = 2;
-    int cpt = 0;
     time_t begin = time(NULL);
     star s;
     int minute;
@@ -71,21 +71,18 @@ void integrate(star* galaxy, int& nb_star, double& dt, double& T) {
             compute_force(root, s.x, s.y, s.z, s.mass, force);
             partricles_force_x[i] = force[0];
             partricles_force_y[i] = force[1];
+            partricles_force_z[i] = force[2];
         }
         for( int i=0; i<nb_star; ++i) {
-            double fx = partricles_force_x[i];
-            double fy = partricles_force_y[i];
-            double fz = partricles_force_z[i];
-
             star* s = &galaxy[i];
 
             s->vx += s->ax*dt_2;
             s->vy += s->ay*dt_2;
             s->vz += s->az*dt_2;
 
-            s->ax = fx / s->mass;
-            s->ay = fy / s->mass;
-            s->az = fz / s->mass;
+            s->ax = partricles_force_x[i] / s->mass;
+            s->ay = partricles_force_y[i] / s->mass;
+            s->az = partricles_force_z[i] / s->mass;
 
             s->vx += s->ax*dt_2;
             s->vy += s->ay*dt_2;
@@ -111,9 +108,10 @@ void integrate(star* galaxy, int& nb_star, double& dt, double& T) {
         delete root;
 
     }
+    delete[] force;
     delete[] partricles_force_x;
     delete[] partricles_force_y;
-    delete[] force;
+    delete[] partricles_force_z;
 }
 
 
@@ -139,7 +137,7 @@ void compute_force(Node* root, double& x, double& y, double& z, double& m, doubl
     } else {
         double *force2 = new double[3];
         Node **children = root->children;
-        for(int i=0; i<4; ++i){
+        for(int i=0; i<4; ++i) {
             if( children[i] != nullptr ) {
                 compute_force(children[i], x, y, z, m, force2);
                 force[0] += force2[0];
@@ -203,7 +201,7 @@ Bbox* find_root_bbox(star* galaxy, int& nb_star) {
 //
 int quadrant_of_particle(Bbox* bbox, double& x, double& y, double& z) {
 
-    if( 2*z >= bbox->z2 + bbox->z1 ) {
+    if( 2*z <= bbox->z2 + bbox->z1 ) {
         if( 2*y >= bbox->y2 + bbox->y1 ) {
             if( 2*x <= bbox->x2 + bbox->x1 ) return 0;
             else return 1;
