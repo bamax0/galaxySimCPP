@@ -1,6 +1,6 @@
 CC=g++
 LDFLAGS=
-CCFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -I./include -g -O3 -ffast-math -fopenmp -lm
+CCFLAGS=-Wall -Wextra -ansi -pedantic -std=c++11 -I./include -g -O3 -fopenmp -lm
 
 BIN=./bin
 OBJ=./obj
