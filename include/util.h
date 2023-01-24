@@ -7,9 +7,9 @@
 #include <iostream>
 #include <time.h>
 
-void saveMass(star* stars, int nb_star); 
+void saveMass(Star3d *stars, int nb_star);
 
-void saveStar(star* stars, int nb_star);
+void saveStar(Star3d *stars, int nb_star);
 
 double invsqrtQuake(double number);
 

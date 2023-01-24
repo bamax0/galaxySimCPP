@@ -11,16 +11,16 @@ void quad_insert(Node *root, double &x, double &y, double &z, double &m)
     if (root_mass == 0)
     {
         root->mass = m;
-        root->cm_x = x;
-        root->cm_y = y;
-        root->cm_z = z;
+        root->cm.x = x;
+        root->cm.y = y;
+        root->cm.z = z;
     }
     else if (root->is_children_null())
     {
-        int old_quadrant = quadrant_of_particle(root->bbox, root->cm_x, root->cm_y, root->cm_z);
+        int old_quadrant = quadrant_of_particle(root->bbox, root->cm.x, root->cm.y, root->cm.z);
         root->children[old_quadrant] = new Node();
         root->children[old_quadrant]->bbox = quadrant_bbox(root->bbox, old_quadrant);
-        quad_insert(root->children[old_quadrant], root->cm_x, root->cm_y, root->cm_z, root_mass);
+        quad_insert(root->children[old_quadrant], root->cm.x, root->cm.y, root->cm.z, root_mass);
         int new_quadrant = quadrant_of_particle(root->bbox, x, y, z);
         if (root->children[new_quadrant] == NULL)
         {
@@ -28,9 +28,9 @@ void quad_insert(Node *root, double &x, double &y, double &z, double &m)
             root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
         }
         quad_insert(root->children[new_quadrant], x, y, z, m);
-        root->cm_x = (root->cm_x * root_mass + x * m) / (root_mass + m);
-        root->cm_y = (root->cm_y * root_mass + y * m) / (root_mass + m);
-        root->cm_z = (root->cm_z * root_mass + z * m) / (root_mass + m);
+        root->cm.x = (root->cm.x * root_mass + x * m) / (root_mass + m);
+        root->cm.y = (root->cm.y * root_mass + y * m) / (root_mass + m);
+        root->cm.z = (root->cm.z * root_mass + z * m) / (root_mass + m);
         root->mass = root_mass + m;
     }
     else
@@ -42,14 +42,14 @@ void quad_insert(Node *root, double &x, double &y, double &z, double &m)
             root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
         }
         quad_insert(root->children[new_quadrant], x, y, z, m);
-        root->cm_x = (root->cm_x * root_mass + x * m) / (root_mass + m);
-        root->cm_y = (root->cm_y * root_mass + y * m) / (root_mass + m);
-        root->cm_z = (root->cm_z * root_mass + z * m) / (root_mass + m);
+        root->cm.x = (root->cm.x * root_mass + x * m) / (root_mass + m);
+        root->cm.y = (root->cm.y * root_mass + y * m) / (root_mass + m);
+        root->cm.z = (root->cm.z * root_mass + z * m) / (root_mass + m);
         root->mass = root_mass + m;
     }
 }
 
-void integrate(star *galaxy, int &nb_star, double &dt, double &T)
+void integrate(Star3d *galaxy, int &nb_star, double &dt, double &T)
 {
     double dt_2 = dt / 2;
     int cptCapt = 10;
@@ -60,7 +60,7 @@ void integrate(star *galaxy, int &nb_star, double &dt, double &T)
     double *partricles_force_z = new double[nb_star];
 
     time_t begin = time(NULL);
-    star s;
+    Star3d s;
     int minute;
     saveMass(galaxy, nb_star);
 
@@ -72,14 +72,14 @@ void integrate(star *galaxy, int &nb_star, double &dt, double &T)
         for (int i = 0; i < nb_star; ++i)
         {
             s = galaxy[i];
-            quad_insert(root, s.x, s.y, s.z, s.mass);
+            quad_insert(root, s.pos.x, s.pos.y, s.pos.z, s.mass);
         }
 
         // #pragma omp parallel for
         for (int i = 0; i < nb_star; ++i)
         {
             s = galaxy[i];
-            compute_force(root, s.x, s.y, s.z, s.mass, force);
+            compute_force(root, s.pos.x, s.pos.y, s.pos.z, s.mass, force);
             partricles_force_x[i] = force[0];
             partricles_force_y[i] = force[1];
             partricles_force_z[i] = force[2];
@@ -87,23 +87,23 @@ void integrate(star *galaxy, int &nb_star, double &dt, double &T)
 
         for (int i = 0; i < nb_star; ++i)
         {
-            star *s = &galaxy[i];
+            Star3d *s = &galaxy[i];
 
-            s->vx += s->ax * dt_2;
-            s->vy += s->ay * dt_2;
-            s->vz += s->az * dt_2;
+            s->v.x += s->a.x * dt_2;
+            s->v.y += s->a.y * dt_2;
+            s->v.z += s->a.z * dt_2;
 
-            s->ax = partricles_force_x[i] / s->mass;
-            s->ay = partricles_force_y[i] / s->mass;
-            s->az = partricles_force_z[i] / s->mass;
+            s->a.x = partricles_force_x[i] / s->mass;
+            s->a.y = partricles_force_y[i] / s->mass;
+            s->a.z = partricles_force_z[i] / s->mass;
 
-            s->vx += s->ax * dt_2;
-            s->vy += s->ay * dt_2;
-            s->vz += s->az * dt_2;
+            s->v.x += s->a.x * dt_2;
+            s->v.y += s->a.y * dt_2;
+            s->v.z += s->a.z * dt_2;
 
-            s->x += s->vx * dt;
-            s->y += s->vy * dt;
-            s->z += s->vz * dt;
+            s->pos.x += s->v.x * dt;
+            s->pos.y += s->v.y * dt;
+            s->pos.z += s->v.z * dt;
         }
         if (cpt % cptCapt == 0)
         {
@@ -133,14 +133,14 @@ void compute_force(Node *root, double &x, double &y, double &z, double &m, doubl
     force[2] = 0;
     if (root->mass == 0)
         return;
-    if (root->cm_x == x && root->cm_y == y && root->cm_z == z)
+    if (root->cm.x == x && root->cm.y == y && root->cm.z == z)
         return;
 
     double d = root->bbox->x2 - root->bbox->x1;
 
-    double dx = root->cm_x - x;
-    double dy = root->cm_y - y;
-    double dz = root->cm_z - z;
+    double dx = root->cm.x - x;
+    double dy = root->cm.y - y;
+    double dz = root->cm.z - z;
     double r2 = dx * dx + dy * dy + dz * dz + softening2;
     double inv_r = invsqrtQuake(r2 * r2 * r2);
     if (d * inv_r * r2 < theta || root->is_children_null())
@@ -168,21 +168,21 @@ void compute_force(Node *root, double &x, double &y, double &z, double &m, doubl
     }
 }
 
-Bbox *find_root_bbox(star *galaxy, int &nb_star)
+Bbox *find_root_bbox(Star3d *galaxy, int &nb_star)
 {
-    double xmin = galaxy[0].x;
+    double xmin = galaxy[0].pos.x;
     double xmax = xmin;
-    double ymin = galaxy[0].y;
+    double ymin = galaxy[0].pos.y;
     double ymax = ymin;
-    double zmin = galaxy[0].z;
+    double zmin = galaxy[0].pos.z;
     double zmax = zmin;
 
     double x, y, z;
     for (int i = 0; i < nb_star; ++i)
     {
-        x = galaxy[i].x;
-        y = galaxy[i].y;
-        z = galaxy[i].z;
+        x = galaxy[i].pos.x;
+        y = galaxy[i].pos.y;
+        z = galaxy[i].pos.z;
         if (x > xmax)
             xmax = x;
         if (x < xmin)
