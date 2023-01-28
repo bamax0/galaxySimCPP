@@ -52,7 +52,7 @@ void quad_insert(Node *root, double &x, double &y, double &z, double &m)
 void integrate(star *galaxy, int &nb_star, double &dt, double &T)
 {
     double dt_2 = dt / 2;
-    int cptCapt = 10;
+    int cptCapt = 4;
     int cpt = 0;
     double *force = new double[3];
     double *partricles_force_x = new double[nb_star];
