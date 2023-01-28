@@ -11,9 +11,7 @@ void quad_insert(Node *root, double &x, double &y, double &z, double &m)
     if (root_mass == 0)
     {
         root->mass = m;
-        root->cm.x = x;
-        root->cm.y = y;
-        root->cm.z = z;
+        root->cm.setPoint(x, y, z);
     }
     else if (root->is_children_null())
     {
@@ -54,13 +52,11 @@ void integrate(Star3d *galaxy, int &nb_star, double &dt, double &T)
     double dt_2 = dt / 2;
     int cptCapt = 10;
     int cpt = 0;
-    double *force = new double[3];
-    double *partricles_force_x = new double[nb_star];
-    double *partricles_force_y = new double[nb_star];
-    double *partricles_force_z = new double[nb_star];
+    Point3d *force = new Point3d();
+    Point3d partricles_force[nb_star];
 
     time_t begin = time(NULL);
-    Star3d s;
+    Star3d *s;
     int minute;
     saveMass(galaxy, nb_star);
 
@@ -71,39 +67,29 @@ void integrate(Star3d *galaxy, int &nb_star, double &dt, double &T)
         root->bbox = find_root_bbox(galaxy, nb_star);
         for (int i = 0; i < nb_star; ++i)
         {
-            s = galaxy[i];
-            quad_insert(root, s.pos.x, s.pos.y, s.pos.z, s.mass);
+            s = &galaxy[i];
+            quad_insert(root, s->pos.x, s->pos.y, s->pos.z, s->mass);
         }
 
         // #pragma omp parallel for
         for (int i = 0; i < nb_star; ++i)
         {
-            s = galaxy[i];
-            compute_force(root, s.pos.x, s.pos.y, s.pos.z, s.mass, force);
-            partricles_force_x[i] = force[0];
-            partricles_force_y[i] = force[1];
-            partricles_force_z[i] = force[2];
+            s = &galaxy[i];
+            compute_force(root, s->pos.x, s->pos.y, s->pos.z, s->mass, force);
+            partricles_force[i].setPoint(force->x, force->y, force->z);
         }
 
         for (int i = 0; i < nb_star; ++i)
         {
             Star3d *s = &galaxy[i];
 
-            s->v.x += s->a.x * dt_2;
-            s->v.y += s->a.y * dt_2;
-            s->v.z += s->a.z * dt_2;
+            s->v += s->a * dt_2;
 
-            s->a.x = partricles_force_x[i] / s->mass;
-            s->a.y = partricles_force_y[i] / s->mass;
-            s->a.z = partricles_force_z[i] / s->mass;
+            s->a = partricles_force[i] / s->mass;
 
-            s->v.x += s->a.x * dt_2;
-            s->v.y += s->a.y * dt_2;
-            s->v.z += s->a.z * dt_2;
+            s->v += s->a * dt_2;
 
-            s->pos.x += s->v.x * dt;
-            s->pos.y += s->v.y * dt;
-            s->pos.z += s->v.z * dt;
+            s->pos += s->v * dt;
         }
         if (cpt % cptCapt == 0)
         {
@@ -120,17 +106,14 @@ void integrate(Star3d *galaxy, int &nb_star, double &dt, double &T)
         ++cpt;
         delete root;
     }
-    delete[] partricles_force_x;
-    delete[] partricles_force_y;
-    delete[] partricles_force_z;
-    delete[] force;
+    delete force;
 }
 
-void compute_force(Node *root, double &x, double &y, double &z, double &m, double *force)
+void compute_force(Node *root, double &x, double &y, double &z, double &m, Point3d *force)
 {
-    force[0] = 0;
-    force[1] = 0;
-    force[2] = 0;
+    force->x = 0;
+    force->y = 0;
+    force->z = 0;
     if (root->mass == 0)
         return;
     if (root->cm.x == x && root->cm.y == y && root->cm.z == z)
@@ -146,25 +129,23 @@ void compute_force(Node *root, double &x, double &y, double &z, double &m, doubl
     if (d * inv_r * r2 < theta || root->is_children_null())
     {
         double norm_f = m * root->mass * inv_r;
-        force[0] = norm_f * dx;
-        force[1] = norm_f * dy;
-        force[2] = norm_f * dz;
+        force->x = norm_f * dx;
+        force->y = norm_f * dy;
+        force->z = norm_f * dz;
     }
     else
     {
-        double *force2 = new double[3];
+        Point3d *force2 = new Point3d();
         Node **children = root->children;
         for (int i = 0; i < 8; ++i)
         {
             if (children[i] != nullptr)
             {
                 compute_force(children[i], x, y, z, m, force2);
-                force[0] += force2[0];
-                force[1] += force2[1];
-                force[2] += force2[2];
+                *force += *force2;
             }
         }
-        delete[] force2;
+        delete force2;
     }
 }
 

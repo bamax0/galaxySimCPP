@@ -53,6 +53,6 @@ Bbox *find_root_bbox(Star3d *galaxy, int &nb_star);
 void quad_insert(Node *root, double &x, double &y, double &z, double &m);
 int quadrant_of_particle(Bbox *bbox, double &x, double &y, double &z);
 Bbox *quadrant_bbox(Bbox *bbox, int &quadrant);
-void compute_force(Node *root, double &x, double &y, double &z, double &m, double *force);
+void compute_force(Node *root, double &x, double &y, double &z, double &m, Point3d *force);
 
 #endif // BARNES_HUT_H

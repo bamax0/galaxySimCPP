@@ -20,7 +20,7 @@ void initSphereGalaxy(Star3d *tab_star, int nb_star, double dt)
     double v_theta, v_phi, v_r;
     int i;
     double galaxyRadius = 4.0;
-    double galaxy_velocity = 0.5;
+    double galaxy_velocity = 0.2;
 
     srand(time(NULL));
 
@@ -30,20 +30,18 @@ void initSphereGalaxy(Star3d *tab_star, int nb_star, double dt)
         phi = acos(2 * getRandomValue() - 1);
         r = getRandomValueBetween(0.1, galaxyRadius);
         // calculate the position of the star
-        tab_star[i].pos.x = galaxyRadius * sin(phi) * cos(theta);
-        tab_star[i].pos.y = galaxyRadius * sin(phi) * sin(theta);
-        tab_star[i].pos.z = galaxyRadius * cos(phi);
-        if (tab_star[i].pos.x == 0)
-            tab_star[i].pos.x = 15;
-        tab_star[i].mass = (double)getRandomValueBetween(0.1, 40);
+        tab_star[i].pos.x = r * sin(phi) * cos(theta);
+        tab_star[i].pos.y = r * sin(phi) * sin(theta);
+        tab_star[i].pos.z = r * cos(phi);
+        tab_star[i].mass = (double)getRandomValueBetween(0.1, 10) / nb_star;
 
         v_theta = 2 * M_PI * getRandomValue();
         v_phi = acos(2 * getRandomValue() - 1);
         v_r = getRandomValueBetween(0, galaxy_velocity);
 
-        tab_star[i].v.x = v_r * sin(v_phi) * cos(v_theta);
-        tab_star[i].v.y = v_r * sin(v_phi) * sin(v_theta);
-        tab_star[i].v.z = 0; // v_r * cos(v_phi);
+        tab_star[i].v.x = v_r / r * tab_star[i].pos.y;
+        tab_star[i].v.y = v_r / r * tab_star[i].pos.x;
+        tab_star[i].v.z = 0;
 
         tab_star[i].a.x = 0;
         tab_star[i].a.y = 0;

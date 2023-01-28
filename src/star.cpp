@@ -3,6 +3,7 @@
 Point3d &Point3d::operator=(const Point3d &p)
 {
     setPoint(p.x, p.y, p.z);
+    return *this;
 }
 
 Point3d &Point3d::operator+=(const Point3d &p)
