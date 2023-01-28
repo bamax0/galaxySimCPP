@@ -1,18 +1,9 @@
 #include "initStar.h"
+#include "util.h"
 #include <cmath>
 #include <random>
 
 using namespace std;
-
-double getRandomValue()
-{
-    return (double)rand() / RAND_MAX;
-}
-
-double getRandomValueBetween(double start, double end)
-{
-    return getRandomValue() * (end - start) + start;
-}
 
 void initSphereGalaxy(Star3d *tab_star, int nb_star, double dt)
 {

@@ -13,4 +13,8 @@ void saveStar(Star3d *stars, int nb_star);
 
 double invsqrtQuake(double number);
 
+double getRandomValue();
+
+double getRandomValueBetween(double start, double end);
+
 #endif

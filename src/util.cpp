@@ -49,3 +49,13 @@ double invsqrtQuake(double number)
     //      y  = y * ( 1.5 - ( x2 * y * y ) );   // 2nd iteration, this can be removed
     return y;
 }
+
+double getRandomValue()
+{
+    return (double)rand() / RAND_MAX;
+}
+
+double getRandomValueBetween(const double start, const double end)
+{
+    return getRandomValue() * (end - start) + start;
+}

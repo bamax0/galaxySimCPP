@@ -5,125 +5,59 @@ double softening = 0.1;
 double theta = 0.5;
 double softening2 = softening * softening;
 
-void quad_insert(Node *root, double &x, double &y, double &z, double &m)
+void quad_insert(Node *root, Point3d &p, double &m)
 {
     double root_mass = root->mass;
     if (root_mass == 0)
     {
         root->mass = m;
-        root->cm.setPoint(x, y, z);
+        root->cm = p;
     }
     else if (root->is_children_null())
     {
-        int old_quadrant = quadrant_of_particle(root->bbox, root->cm.x, root->cm.y, root->cm.z);
+        int old_quadrant = quadrant_of_particle(root->bbox, root->cm);
         root->children[old_quadrant] = new Node();
         root->children[old_quadrant]->bbox = quadrant_bbox(root->bbox, old_quadrant);
-        quad_insert(root->children[old_quadrant], root->cm.x, root->cm.y, root->cm.z, root_mass);
-        int new_quadrant = quadrant_of_particle(root->bbox, x, y, z);
+        quad_insert(root->children[old_quadrant], root->cm, root_mass);
+        int new_quadrant = quadrant_of_particle(root->bbox, p);
         if (root->children[new_quadrant] == NULL)
         {
             root->children[new_quadrant] = new Node();
             root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
         }
-        quad_insert(root->children[new_quadrant], x, y, z, m);
-        root->cm.x = (root->cm.x * root_mass + x * m) / (root_mass + m);
-        root->cm.y = (root->cm.y * root_mass + y * m) / (root_mass + m);
-        root->cm.z = (root->cm.z * root_mass + z * m) / (root_mass + m);
+        quad_insert(root->children[new_quadrant], p, m);
+        root->cm = (root->cm * root_mass + p * m) / (root_mass + m);
         root->mass = root_mass + m;
     }
     else
     {
-        int new_quadrant = quadrant_of_particle(root->bbox, x, y, z);
+        int new_quadrant = quadrant_of_particle(root->bbox, p);
         if (root->children[new_quadrant] == nullptr)
         {
             root->children[new_quadrant] = new Node();
             root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
         }
-        quad_insert(root->children[new_quadrant], x, y, z, m);
-        root->cm.x = (root->cm.x * root_mass + x * m) / (root_mass + m);
-        root->cm.y = (root->cm.y * root_mass + y * m) / (root_mass + m);
-        root->cm.z = (root->cm.z * root_mass + z * m) / (root_mass + m);
+        quad_insert(root->children[new_quadrant], p, m);
+        root->cm = (root->cm * root_mass + p * m) / (root_mass + m);
         root->mass = root_mass + m;
     }
 }
 
-void integrate(Star3d *galaxy, int &nb_star, double &dt, double &T)
-{
-    double dt_2 = dt / 2;
-    int cptCapt = 10;
-    int cpt = 0;
-    Point3d *force = new Point3d();
-    Point3d partricles_force[nb_star];
-
-    time_t begin = time(NULL);
-    Star3d *s;
-    int minute;
-    saveMass(galaxy, nb_star);
-
-    cout << "start" << endl;
-    for (double t = 0; t < T; t += dt)
-    {
-        Node *root = new Node;
-        root->bbox = find_root_bbox(galaxy, nb_star);
-        for (int i = 0; i < nb_star; ++i)
-        {
-            s = &galaxy[i];
-            quad_insert(root, s->pos.x, s->pos.y, s->pos.z, s->mass);
-        }
-
-        // #pragma omp parallel for
-        for (int i = 0; i < nb_star; ++i)
-        {
-            s = &galaxy[i];
-            compute_force(root, s->pos.x, s->pos.y, s->pos.z, s->mass, force);
-            partricles_force[i].setPoint(force->x, force->y, force->z);
-        }
-
-        for (int i = 0; i < nb_star; ++i)
-        {
-            Star3d *s = &galaxy[i];
-
-            s->v += s->a * dt_2;
-
-            s->a = partricles_force[i] / s->mass;
-
-            s->v += s->a * dt_2;
-
-            s->pos += s->v * dt;
-        }
-        if (cpt % cptCapt == 0)
-        {
-            time_t end = time(NULL);
-            if (t)
-            {
-                minute = (int)(end - begin) * (T / t - 1);
-                cout << (int)(t / T * 10000) / 100. << "\% time left: "
-                     << (int)(minute / 60 / 60) << "h " << (minute / 60) % 60
-                     << "m (time :" << (int)(end - begin) / 60 << "m )" << endl;
-            }
-            saveStar(galaxy, nb_star);
-        }
-        ++cpt;
-        delete root;
-    }
-    delete force;
-}
-
-void compute_force(Node *root, double &x, double &y, double &z, double &m, Point3d *force)
+void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
 {
     force->x = 0;
     force->y = 0;
     force->z = 0;
     if (root->mass == 0)
         return;
-    if (root->cm.x == x && root->cm.y == y && root->cm.z == z)
+    if (root->cm == p)
         return;
 
     double d = root->bbox->x2 - root->bbox->x1;
 
-    double dx = root->cm.x - x;
-    double dy = root->cm.y - y;
-    double dz = root->cm.z - z;
+    double dx = root->cm.x - p.x;
+    double dy = root->cm.y - p.y;
+    double dz = root->cm.z - p.z;
     double r2 = dx * dx + dy * dy + dz * dz + softening2;
     double inv_r = invsqrtQuake(r2 * r2 * r2);
     if (d * inv_r * r2 < theta || root->is_children_null())
@@ -141,7 +75,7 @@ void compute_force(Node *root, double &x, double &y, double &z, double &m, Point
         {
             if (children[i] != nullptr)
             {
-                compute_force(children[i], x, y, z, m, force2);
+                compute_force(children[i], p, m, force2);
                 *force += *force2;
             }
         }
@@ -211,21 +145,21 @@ Bbox *find_root_bbox(Star3d *galaxy, int &nb_star)
 }
 
 //
-int quadrant_of_particle(Bbox *bbox, double &x, double &y, double &z)
+int quadrant_of_particle(Bbox *bbox, Point3d &p)
 {
 
-    if (2 * z <= bbox->z2 + bbox->z1)
+    if (2 * p.z <= bbox->z2 + bbox->z1)
     {
-        if (2 * y >= bbox->y2 + bbox->y1)
+        if (2 * p.y >= bbox->y2 + bbox->y1)
         {
-            if (2 * x <= bbox->x2 + bbox->x1)
+            if (2 * p.x <= bbox->x2 + bbox->x1)
                 return 0;
             else
                 return 1;
         }
         else
         {
-            if (2 * x >= bbox->x2 + bbox->x1)
+            if (2 * p.x >= bbox->x2 + bbox->x1)
                 return 2;
             else
                 return 3;
@@ -233,16 +167,16 @@ int quadrant_of_particle(Bbox *bbox, double &x, double &y, double &z)
     }
     else
     {
-        if (2 * y >= bbox->y2 + bbox->y1)
+        if (2 * p.y >= bbox->y2 + bbox->y1)
         {
-            if (2 * x <= bbox->x2 + bbox->x1)
+            if (2 * p.x <= bbox->x2 + bbox->x1)
                 return 4;
             else
                 return 5;
         }
         else
         {
-            if (2 * x >= bbox->x2 + bbox->x1)
+            if (2 * p.x >= bbox->x2 + bbox->x1)
                 return 6;
             else
                 return 7;
@@ -261,83 +195,76 @@ Bbox *quadrant_bbox(Bbox *bbox, int &quadrant)
     {
     case 0:
         b->x1 = bbox->x1;
-        b->x2 = x;
-
         b->y1 = y;
-        b->y2 = bbox->y2;
-
         b->z1 = z;
+
+        b->x2 = x;
+        b->y2 = bbox->y2;
         b->z2 = bbox->z2;
         break;
     case 1:
         b->x1 = x;
-        b->x2 = bbox->x2;
-
-        b->y1 = y;
         b->y2 = bbox->y2;
-
-        b->z1 = z;
         b->z2 = bbox->z2;
+
+        b->x2 = bbox->x2;
+        b->y1 = y;
+        b->z1 = z;
         break;
     case 2:
-        b->x1 = x;
         b->x2 = bbox->x2;
-
-        b->y1 = bbox->y1;
         b->y2 = y;
-
-        b->z1 = z;
         b->z2 = bbox->z2;
+
+        b->x1 = x;
+        b->y1 = bbox->y1;
+        b->z1 = z;
         break;
     case 3:
         b->x1 = bbox->x1;
-        b->x2 = x;
-
         b->y1 = bbox->y1;
+        b->z1 = z;
+
+        b->x2 = x;
+        b->z2 = bbox->z2;
         b->y2 = y;
 
-        b->z1 = z;
-        b->z2 = bbox->z2;
         break;
 
     case 4:
         b->x1 = bbox->x1;
-        b->x2 = x;
-
         b->y1 = y;
-        b->y2 = bbox->y2;
-
         b->z1 = bbox->z1;
+
+        b->x2 = x;
+        b->y2 = bbox->y2;
         b->z2 = z;
         break;
     case 5:
-        b->x1 = x;
         b->x2 = bbox->x2;
-
-        b->y1 = y;
         b->y2 = bbox->y2;
-
-        b->z1 = bbox->z1;
         b->z2 = z;
+
+        b->x1 = x;
+        b->y1 = y;
+        b->z1 = bbox->z1;
         break;
     case 6:
         b->x1 = x;
-        b->x2 = bbox->x2;
-
         b->y1 = bbox->y1;
-        b->y2 = y;
-
         b->z1 = bbox->z1;
+
+        b->x2 = bbox->x2;
+        b->y2 = y;
         b->z2 = z;
         break;
     case 7:
         b->x1 = bbox->x1;
-        b->x2 = x;
-
         b->y1 = bbox->y1;
-        b->y2 = y;
-
         b->z1 = bbox->z1;
+
+        b->x2 = x;
+        b->y2 = y;
         b->z2 = z;
         break;
     }

@@ -9,7 +9,7 @@ SRC=./src
 SRC_FILE = $(wildcard $(SRC)/*.cpp)
 OBJ_FILE = $(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SRC_FILE))
 
-DIRECTORY=bin obj include src
+DIRECTORY=bin obj include src data
 EXEC=main
 
 all: prepare $(EXEC)
@@ -29,6 +29,7 @@ clean:
 
 properclean: clean
 	rm -rf $(BIN)
+	rm -rf ./data
 
 
 .PHONY: all prepare directory file clean properclean
