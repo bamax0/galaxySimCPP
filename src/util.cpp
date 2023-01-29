@@ -1,17 +1,17 @@
 #include "util.h"
 
-void saveMass(Star3d *stars, int nb_star)
+void saveMass(Galaxy &galaxy)
 {
     FILE *f = fopen("./data/mass", "w+");
     fprintf(f, "m\n");
-    for (int i = 0; i < nb_star; i++)
-        fprintf(f, "%i\n", stars[i].mass);
+    for (int i = 0; i < galaxy.getNbStar(); i++)
+        fprintf(f, "%i\n", galaxy[i].mass);
     fclose(f);
     return;
 }
 
 int cpt_save = 0;
-void saveStar(Star3d *stars, int nb_star)
+void saveStar(Galaxy &galaxy)
 {
     int size = 3;
     int height = 1800;
@@ -23,9 +23,9 @@ void saveStar(Star3d *stars, int nb_star)
     FILE *f = fopen(name, "w+");
     Star3d s;
     fprintf(f, "x;y;z\n");
-    for (int i = 0; i < nb_star; i++)
+    for (int i = 0; i < galaxy.getNbStar(); i++)
     {
-        s = stars[i];
+        s = galaxy[i];
         x = (s.pos.x / size * width / 2) + width / 2;
         y = (s.pos.y / size * height / 2) + height / 2;
         z = (s.pos.z / size * depth / 2) + depth / 2;

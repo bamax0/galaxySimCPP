@@ -10,6 +10,7 @@ public:
     Point3d v;
 
     Point3d a;
+    Point3d f;
 
     double mass;
 

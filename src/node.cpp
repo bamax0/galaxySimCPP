@@ -23,3 +23,12 @@ Node::~Node()
 
     delete bbox;
 }
+
+void Node::set_quadrant(const int &quadrant)
+{
+    if (children[quadrant] == nullptr)
+    {
+        children[quadrant] = new Node();
+        children[quadrant]->bbox = bbox->get_quadrant(quadrant);
+    }
+}

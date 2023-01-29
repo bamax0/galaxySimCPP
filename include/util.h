@@ -6,10 +6,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <time.h>
+#include "galaxy.h"
 
-void saveMass(Star3d *stars, int nb_star);
+void saveMass(Galaxy &stars);
 
-void saveStar(Star3d *stars, int nb_star);
+void saveStar(Galaxy &stars);
 
 double invsqrtQuake(double number);
 

@@ -16,6 +16,7 @@ public:
     ~Node();
 
     bool is_children_null();
+    void set_quadrant(const int &new_quadrant);
 };
 
 #endif

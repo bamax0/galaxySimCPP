@@ -12,35 +12,22 @@ void quad_insert(Node *root, Point3d &p, double &m)
     {
         root->mass = m;
         root->cm = p;
+        return;
     }
-    else if (root->is_children_null())
+
+    if (root->is_children_null())
     {
         int old_quadrant = quadrant_of_particle(root->bbox, root->cm);
-        root->children[old_quadrant] = new Node();
-        root->children[old_quadrant]->bbox = quadrant_bbox(root->bbox, old_quadrant);
+        root->set_quadrant(old_quadrant);
         quad_insert(root->children[old_quadrant], root->cm, root_mass);
-        int new_quadrant = quadrant_of_particle(root->bbox, p);
-        if (root->children[new_quadrant] == NULL)
-        {
-            root->children[new_quadrant] = new Node();
-            root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
-        }
-        quad_insert(root->children[new_quadrant], p, m);
-        root->cm = (root->cm * root_mass + p * m) / (root_mass + m);
-        root->mass = root_mass + m;
     }
-    else
-    {
-        int new_quadrant = quadrant_of_particle(root->bbox, p);
-        if (root->children[new_quadrant] == nullptr)
-        {
-            root->children[new_quadrant] = new Node();
-            root->children[new_quadrant]->bbox = quadrant_bbox(root->bbox, new_quadrant);
-        }
-        quad_insert(root->children[new_quadrant], p, m);
-        root->cm = (root->cm * root_mass + p * m) / (root_mass + m);
-        root->mass = root_mass + m;
-    }
+
+    int new_quadrant = quadrant_of_particle(root->bbox, p);
+    root->set_quadrant(new_quadrant);
+
+    quad_insert(root->children[new_quadrant], p, m);
+    root->cm = (root->cm * root_mass + p * m) / (root_mass + m);
+    root->mass = root_mass + m;
 }
 
 void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
@@ -83,7 +70,7 @@ void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
     }
 }
 
-Bbox *find_root_bbox(Star3d *galaxy, int &nb_star)
+Bbox *find_root_bbox(Galaxy &galaxy)
 {
     double xmin = galaxy[0].pos.x;
     double xmax = xmin;
@@ -93,7 +80,7 @@ Bbox *find_root_bbox(Star3d *galaxy, int &nb_star)
     double zmax = zmin;
 
     double x, y, z;
-    for (int i = 0; i < nb_star; ++i)
+    for (int i = 0; i < galaxy.getNbStar(); ++i)
     {
         x = galaxy[i].pos.x;
         y = galaxy[i].pos.y;
@@ -182,91 +169,4 @@ int quadrant_of_particle(Bbox *bbox, Point3d &p)
                 return 7;
         }
     }
-}
-
-Bbox *quadrant_bbox(Bbox *bbox, int &quadrant)
-{
-    Bbox *b = new Bbox();
-    double x = (bbox->x1 + bbox->x2) / 2.;
-    double y = (bbox->y1 + bbox->y2) / 2.;
-    double z = (bbox->z1 + bbox->z2) / 2.;
-    // Quadrant 0: (xmin, x, y, ymax)
-    switch (quadrant)
-    {
-    case 0:
-        b->x1 = bbox->x1;
-        b->y1 = y;
-        b->z1 = z;
-
-        b->x2 = x;
-        b->y2 = bbox->y2;
-        b->z2 = bbox->z2;
-        break;
-    case 1:
-        b->x1 = x;
-        b->y2 = bbox->y2;
-        b->z2 = bbox->z2;
-
-        b->x2 = bbox->x2;
-        b->y1 = y;
-        b->z1 = z;
-        break;
-    case 2:
-        b->x2 = bbox->x2;
-        b->y2 = y;
-        b->z2 = bbox->z2;
-
-        b->x1 = x;
-        b->y1 = bbox->y1;
-        b->z1 = z;
-        break;
-    case 3:
-        b->x1 = bbox->x1;
-        b->y1 = bbox->y1;
-        b->z1 = z;
-
-        b->x2 = x;
-        b->z2 = bbox->z2;
-        b->y2 = y;
-
-        break;
-
-    case 4:
-        b->x1 = bbox->x1;
-        b->y1 = y;
-        b->z1 = bbox->z1;
-
-        b->x2 = x;
-        b->y2 = bbox->y2;
-        b->z2 = z;
-        break;
-    case 5:
-        b->x2 = bbox->x2;
-        b->y2 = bbox->y2;
-        b->z2 = z;
-
-        b->x1 = x;
-        b->y1 = y;
-        b->z1 = bbox->z1;
-        break;
-    case 6:
-        b->x1 = x;
-        b->y1 = bbox->y1;
-        b->z1 = bbox->z1;
-
-        b->x2 = bbox->x2;
-        b->y2 = y;
-        b->z2 = z;
-        break;
-    case 7:
-        b->x1 = bbox->x1;
-        b->y1 = bbox->y1;
-        b->z1 = bbox->z1;
-
-        b->x2 = x;
-        b->y2 = y;
-        b->z2 = z;
-        break;
-    }
-    return b;
 }
