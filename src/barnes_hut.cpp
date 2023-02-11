@@ -1,7 +1,7 @@
 #include "barnes_hut.h"
 using namespace std;
 
-double softening = 0.1;
+double softening = 0.2;
 double theta = 0.5;
 double softening2 = softening * softening;
 

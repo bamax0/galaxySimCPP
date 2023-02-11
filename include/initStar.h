@@ -6,12 +6,9 @@
 #include "galaxy.h"
 
 #define PI 3.14159265358
-void initSphereGalaxy(Galaxy &tab_star, const double dt);
-
-void initStarCircle(Galaxy &tab_star, const double dt);
 
 void initStarUniverse(Galaxy &tab_star, const double dt);
 
-void initStarPlummer(Galaxy &tab_star, const double scale_length);
+void initGalaxy(Galaxy &galaxy, double dt);
 
 #endif
