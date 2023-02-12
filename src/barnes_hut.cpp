@@ -1,9 +1,7 @@
 #include "barnes_hut.h"
 using namespace std;
 
-double softening = 0.2;
 double theta = 0.5;
-double softening2 = softening * softening;
 
 void quad_insert(Node *root, Point3d &p, double &m)
 {
@@ -30,7 +28,7 @@ void quad_insert(Node *root, Point3d &p, double &m)
     root->mass = root_mass + m;
 }
 
-void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
+void compute_force(Node *root, Point3d &p, double &m, Point3d *force, const double &softeningSquare)
 {
     force->x = 0;
     force->y = 0;
@@ -45,7 +43,7 @@ void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
     double dx = root->cm.x - p.x;
     double dy = root->cm.y - p.y;
     double dz = root->cm.z - p.z;
-    double r2 = dx * dx + dy * dy + dz * dz + softening2;
+    double r2 = dx * dx + dy * dy + dz * dz + softeningSquare;
     double inv_r = invsqrtQuake(r2 * r2 * r2);
     if (d * inv_r * r2 < theta || root->is_children_null())
     {
@@ -62,7 +60,7 @@ void compute_force(Node *root, Point3d &p, double &m, Point3d *force)
         {
             if (children[i] != nullptr)
             {
-                compute_force(children[i], p, m, force2);
+                compute_force(children[i], p, m, force2, softeningSquare);
                 *force += *force2;
             }
         }

@@ -10,6 +10,6 @@ Bbox *find_root_bbox(Galaxy &galaxy);
 void quad_insert(Node *root, Point3d &p, double &m);
 int quadrant_of_particle(Bbox *bbox, Point3d &p);
 Bbox *quadrant_bbox(Bbox *bbox, int &quadrant);
-void compute_force(Node *root, Point3d &p, double &m, Point3d *force);
+void compute_force(Node *root, Point3d &p, double &m, Point3d *force, const double &softeningSquare);
 
 #endif // BARNES_HUT_H

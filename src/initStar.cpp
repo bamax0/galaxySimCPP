@@ -36,18 +36,18 @@ void initGalaxy(Galaxy &galaxy, double dt)
     int i;
     int nb_star = galaxy.getNbStar();
     double radius = 2;
-    double v = 0.15;
+    double v = 0.5;
     double r, v_rand;
     srand(time(NULL));
-    for (i = 0; i < nb_star; i++)
+    for (i = 1; i < nb_star; i++)
     {
         phi = getRandomValueBetween(0, 2 * PI);
         r = pow(radius * getRandomValue(), 1. / 3);
         galaxy[i].pos.x = r * cos(phi);
         galaxy[i].pos.y = r * sin(phi);
-        galaxy[i].pos.z = getRandomValueBetween(-0.05, 0.05);
+        galaxy[i].pos.z = getRandomValueBetween(-0.01, 0.01);
 
-        galaxy[i].mass = (double)getRandomValueBetween(0.1, 10) / galaxy.getNbStar();
+        galaxy[i].mass = (double)getRandomValueBetween(0.05, 5) / galaxy.getNbStar();
 
         v_rand = (double)getRandomValueBetween(-v, v);
         galaxy[i].v.x = -v_rand * sin(phi) * dt;
@@ -56,4 +56,11 @@ void initGalaxy(Galaxy &galaxy, double dt)
 
         galaxy[i].a = Point3d();
     }
+
+    // black hole generation
+    galaxy[0].pos = Point3d();
+
+    galaxy[0].mass = (double)getRandomValueBetween(100, 5000) / galaxy.getNbStar();
+
+    galaxy[0].v = Point3d();
 }

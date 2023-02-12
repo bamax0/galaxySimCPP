@@ -1,0 +1,4 @@
+totalDuration = 20
+timeStep  =  0.01
+nbStarPerGalaxy = 15000
+softening = 0.5

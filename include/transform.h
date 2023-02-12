@@ -3,7 +3,7 @@
 #include "galaxy.h"
 #include "point.h"
 
-Point3d degreeToradian(const Point3d &angle);
+Point3d degreeToRadian(const Point3d &angle);
 
 void rotateGalaxy(Galaxy &galaxy, const Point3d &angle);
 void moveGalaxy(Galaxy &galaxy, const Point3d &mov);

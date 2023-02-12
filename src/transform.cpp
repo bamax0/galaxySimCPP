@@ -1,7 +1,7 @@
 #include "transform.h"
 #include <cmath>
 
-Point3d degreeToradian(const Point3d &angle)
+Point3d degreeToRadian(const Point3d &angle)
 {
     return angle * M_PI / 180;
 }
