@@ -3,15 +3,15 @@
 #include "barnes_hut.h"
 #include "transform.h"
 #include "configurationParser.h"
+#include "imageGenerator.h"
 #include <sstream>
 using namespace std;
 
-void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &softening)
+void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &softening, const int &cptCapt)
 {
     double softeningSquare = softening * softening;
     double dt_2 = dt / 2;
-
-    int cptCapt = 40;
+    double expensionRate = 0.0384; // real 0.0384
     int cpt = 0;
     Point3d *force = new Point3d();
 
@@ -42,7 +42,7 @@ void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &
 
             s->v += s->a * dt_2;
 
-            s->pos += s->v * dt;
+            s->pos += s->v * dt + s->pos * expensionRate * dt;
         }
 
         if (cpt % cptCapt == 0)
@@ -55,7 +55,8 @@ void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &
                      << (int)(minute / 60 / 60) << "h " << (minute / 60) % 60
                      << "m (time :" << (int)(end - begin) / 60 << "m )" << endl;
             }
-            saveStar(galaxy);
+            saveStar(galaxy, cpt / cptCapt);
+            generateImage(galaxy, cpt / cptCapt);
         }
         ++cpt;
         delete root;
@@ -71,7 +72,12 @@ int main()
     double T = c.getValue<double>("totalDuration");
     double dt = c.getValue<double>("timeStep");
     int nb_star = c.getValue<int>("nbStarPerGalaxy");
+    int nb_frame = c.getValue<int>("NbFrame");
+    int cptCapt = (int)(T / dt / nb_frame);
+    if (cptCapt < 1)
+        cptCapt = 2;
 
+#if False
     SingleGalaxy galaxy1(nb_star);
     initGalaxy(galaxy1, dt);
     rotateGalaxy(galaxy1, degreeToRadian({45, 0, 0}));
@@ -97,8 +103,11 @@ int main()
     GalaxyUnion galaxyUnion2(galaxy3, galaxy4);
 
     GalaxyUnion galaxy(galaxyUnion1, galaxyUnion2);
-
+#else
+    SingleGalaxy galaxy(nb_star);
+    initStarUniverse(galaxy, dt);
+#endif
     cout << "Galaxy generetion completed" << endl;
-    integrate(galaxy, dt, T, softening);
+    integrate(galaxy, dt, T, softening, cptCapt);
     return 0;
 }

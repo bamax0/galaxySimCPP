@@ -10,7 +10,7 @@
 
 void saveMass(Galaxy &stars);
 
-void saveStar(Galaxy &stars);
+void saveStar(Galaxy &stars, int cpt);
 
 double invsqrtQuake(double number);
 

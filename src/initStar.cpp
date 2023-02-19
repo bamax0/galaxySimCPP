@@ -7,26 +7,26 @@ using namespace std;
 
 void initStarUniverse(Galaxy &galaxy, double dt)
 {
-    float size = 2;
-    float speed = 0.1;
+    float size = 40;
+    float speed = 0.2;
     for (int j = 0; j < galaxy.getNbStar(); j++)
     {
 
         galaxy[j].pos.x = getRandomValueBetween(-size, size);
         galaxy[j].pos.y = getRandomValueBetween(-size, size);
-        galaxy[j].pos.z = getRandomValueBetween(-0.2, 0.2);
+        galaxy[j].pos.z = 0; // getRandomValueBetween(-size, size);
 
-        galaxy[j].mass = (double)getRandomValueBetween(0.2, 7) / galaxy.getNbStar();
+        galaxy[j].mass = (double)getRandomValueBetween(0.1, 40) / galaxy.getNbStar();
 
         galaxy[j].v.x = getRandomValueBetween(-speed, speed);
         galaxy[j].v.y = getRandomValueBetween(-speed, speed);
-        galaxy[j].v.z = getRandomValueBetween(-speed, speed);
+        galaxy[j].v.z = 0; // getRandomValueBetween(-speed, speed);
 
         galaxy[j].a.x = 0;
         galaxy[j].a.y = 0;
         galaxy[j].a.z = 0;
-        if (getRandomValueBetween(0, 1000) < 1)
-            galaxy[j].mass = getRandomValueBetween(15, 1000) / galaxy.getNbStar();
+        if (getRandomValueBetween(0, 100000) < 1)
+            galaxy[j].mass = getRandomValueBetween(150, 5000) / galaxy.getNbStar();
     }
 }
 

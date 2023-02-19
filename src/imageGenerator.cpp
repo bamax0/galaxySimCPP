@@ -1,16 +1,38 @@
 #include <pngwriter.h>
 
+#include "imageGenerator.h"
 #include <sstream>
 #include <cstddef>
 #include <fstream>
 
 #include <string>
 #include <iostream>
-#include <filesystem>
+
 using namespace std;
-int main()
+
+void generateImage(Galaxy &g, int idx)
 {
-    int width = 1900, height = 1900;
+    int imgWidth = 1900, imgHeight = 1900;
+    float boardWidth = 3, boardHeight = 3;
+    string imgFolderPath = "./img";
+
+    string img_path = imgFolderPath + "/sav_" + to_string(idx) + ".png";
+
+    pngwriter PNG(imgWidth, imgHeight, 0, img_path.c_str());
+    float widthCoef = imgWidth / boardWidth / 2, heightCoef = imgHeight / boardHeight / 2;
+    float widthOffset = imgWidth / 2, heightOffset = imgHeight / 2;
+
+    for (int i = 0; i < g.getNbStar(); ++i)
+    {
+        float x = g[i].pos.x, y = g[i].pos.y, z = g[i].pos.z;
+        PNG.plot(x * widthCoef + widthOffset, y * heightCoef + heightOffset, 0.3f, 0.3f, 1.0f);
+    }
+    PNG.close();
+}
+
+int generateImages()
+{
+    int imgWidth = 1900, imgHeight = 1900;
     string folderPath = "./data";
     string imgFolderPath = "./img";
     if (!filesystem::exists(folderPath))
@@ -38,9 +60,7 @@ int main()
 
         string img_path = imgFolderPath + "/sav_" + to_string(id) + ".png";
 
-        pngwriter PNG(width, height, 0, img_path.c_str());
-        int h = -1;
-        double r = 1;
+        pngwriter PNG(imgWidth, imgHeight, 0, img_path.c_str());
         for (string line; getline(source, line);) // read stream line by line
         {
             istringstream in(line);

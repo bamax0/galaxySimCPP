@@ -10,8 +10,7 @@ void saveMass(Galaxy &galaxy)
     return;
 }
 
-int cpt_save = 0;
-void saveStar(Galaxy &galaxy)
+void saveStar(Galaxy &galaxy, int cpt)
 {
     int size = 3;
     int height = 1800;
@@ -19,7 +18,7 @@ void saveStar(Galaxy &galaxy)
     int depth = 1800;
     int x, y, z;
     char name[90];
-    sprintf(name, "./data/sav_%i", cpt_save);
+    sprintf(name, "./data/sav_%i", cpt);
     FILE *f = fopen(name, "w+");
     Star3d s;
     fprintf(f, "x;y;z\n");
@@ -32,7 +31,6 @@ void saveStar(Galaxy &galaxy)
         fprintf(f, "%i;%i;%i\n", x, y, z);
     }
 
-    ++cpt_save;
     fclose(f);
     return;
 }
