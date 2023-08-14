@@ -1,10 +1,10 @@
 #include <iostream>
+#include <sstream>
 #include "initStar.h"
-#include "barnes_hut.h"
 #include "transform.h"
 #include "configurationParser.h"
 #include "imageGenerator.h"
-#include <sstream>
+#include "octreeNode.h"
 using namespace std;
 
 void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &softening, const int &cptCapt)
@@ -22,23 +22,21 @@ void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &
     cout << "start" << endl;
     for (double t = 0; t < T; t += dt)
     {
-        Node *root = new Node;
-        root->bbox = find_root_bbox(galaxy);
+        OctreeNode *root = new OctreeNode(Bbox(0, 0, 0, 1));
         for (int i = 0; i < galaxy.getNbStar(); ++i)
         {
             Star3d *s = &galaxy[i];
-            quad_insert(root, s->pos, s->mass);
+            root->appendStar(s->pos, s->mass);
         }
 
 #pragma omp parallel for
         for (int i = 0; i < galaxy.getNbStar(); ++i)
         {
             Star3d *s = &galaxy[i];
-            compute_force(root, s->pos, s->mass, force, softeningSquare);
 
             s->v += s->a * dt_2;
 
-            s->a = (*force) / s->mass;
+            s->a = root->compute_force(s->pos, s->mass, softeningSquare) / s->mass;
 
             s->v += s->a * dt_2;
 

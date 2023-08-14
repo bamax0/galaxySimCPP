@@ -4,9 +4,9 @@
 class Bbox
 {
 public:
-    double x1, y1, z1;
-    double x2, y2, z2;
-    Bbox *get_quadrant(const int &quadrant) const;
+    Point3d p;
+    double size; // cube bbox
+    Bbox(const double& x, const double& y, const double& z, const double size) : p(x, y, z), size(size){}
 };
 
 #endif
