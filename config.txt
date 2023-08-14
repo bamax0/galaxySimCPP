@@ -1,5 +1,5 @@
 totalDuration = 100
-timeStep  =  0.01
-nbStarPerGalaxy = 800000
+timeStep  =  0.1
+nbStarPerGalaxy = 80000
 softening = 0.1
 NbFrame = 200

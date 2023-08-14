@@ -14,40 +14,43 @@ OctreeNode::~OctreeNode()
         }
 }
 
-void OctreeNode::appendStar(const Point3d& star_pos, const double& star_mass)
+void OctreeNode::appendStar(const Point3d& star_pos, const double& star_mass, const int& depth)
 {
     if(this->nb_star == 1){
-        this->createSubBbox(this->bbox.p, this->m);
+        int idx = this->getSubBbox(this->cm, this->m);
+        this->child[idx]->appendStar(this->cm, this->m, depth+1);
     }
+
     if(this->nb_star >= 1){
-        this->createSubBbox(star_pos, star_mass);
+        int idx = this->getSubBbox(star_pos, star_mass);
+        this->child[idx]->appendStar(star_pos, star_mass, depth+1);
     }
-    double mass = this->m + star_mass;
+    double mass = this->m + star_mass + 1e-4;
     this->cm = (this->cm*this->m + star_pos*star_mass)/mass;
     this->m = mass;
-    ++this->nb_star;
+    this->nb_star += 1;
 }
 
-void OctreeNode::createSubBbox(const Point3d& pos, const double& mass)
+int OctreeNode::getSubBbox(const Point3d& pos, const double& mass)
 {
     int idx = this->getSubBboxId(pos);
     if(this->child[idx] == nullptr){
         this->child[idx] = new OctreeNode(this->getSubBbox(idx));
     }
 
-    this->child[idx]->appendStar(pos, mass);
+    return idx;
 }
 
 Bbox OctreeNode::getSubBbox(int idx) const
 {
     double subBbboxSize = this->bbox.size/2;
-    Bbox subBbbox(this->bbox);
+    Bbox subBbbox(this->bbox.p, subBbboxSize);
 
     if(idx%2){
         subBbbox.p.x += subBbboxSize;
     }
 
-    if(idx == 3 || idx == 4 || idx == 6 || idx == 7){
+    if(idx == 2 || idx == 3 || idx == 6 || idx == 7){
         subBbbox.p.y += subBbboxSize;
     }
 
@@ -82,7 +85,10 @@ double theta = 0.5;
 
 Point3d OctreeNode::compute_force(const Point3d &p, const double &m, const double& softening2) const
 {
-    if (this->m == 0 || this->cm == p)
+    if (this->m == 0)
+        return Point3d();
+
+    if(this->nb_star == 1 && this->cm == p && this->m == m)
         return Point3d();
 
     double dx = this->cm.x - p.x;
@@ -107,5 +113,6 @@ Point3d OctreeNode::compute_force(const Point3d &p, const double &m, const doubl
                 force += this->child[i]->compute_force(p, m, softening2);
             }
         }
+        return force;
     }
 }

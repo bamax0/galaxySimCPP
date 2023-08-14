@@ -20,11 +20,11 @@ public:
     OctreeNode(const Bbox& bbox);
     ~OctreeNode();
 
-    void appendStar(const Point3d& pos, const double& mass);
+    void appendStar(const Point3d& pos, const double& mass, const int& depth=0);
     Point3d compute_force(const Point3d &p, const double &m, const double& softening2) const;
 
 private:
-    void createSubBbox(const Point3d& pos, const double& mass);
+    int getSubBbox(const Point3d& pos, const double& mass);
     Bbox getSubBbox(int idx) const;
     int getSubBboxId(const Point3d& pos) const;
 

@@ -7,6 +7,30 @@
 #include "octreeNode.h"
 using namespace std;
 
+Bbox getBbox(Galaxy &galaxy){
+    Point3d p = galaxy[0].pos;
+    double xmi=p.x, ymi=p.y, zmi=p.z;
+    double xma=p.x, yma=p.y, zma=p.z;
+
+    for (int i = 1; i < galaxy.getNbStar(); ++i)
+    {
+        Point3d p = galaxy[i].pos;
+        if(p.x < xmi) xmi = p.x;
+        if(p.y < ymi) xmi = p.y;
+        if(p.z < zmi) xmi = p.z;
+
+        if(xma < p.x) xma = p.x;
+        if(yma < p.y) xma = p.y;
+        if(zma < p.z) xma = p.z;
+    }
+
+    double size = xma - xmi;
+    if(size < yma - ymi) size = yma - ymi;
+    if(size < zma - zmi) size = zma - zmi;
+    return Bbox(xmi, ymi, zmi, size);
+}
+
+
 void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &softening, const int &cptCapt)
 {
     double softeningSquare = softening * softening;
@@ -22,7 +46,7 @@ void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &
     cout << "start" << endl;
     for (double t = 0; t < T; t += dt)
     {
-        OctreeNode *root = new OctreeNode(Bbox(0, 0, 0, 1));
+        OctreeNode *root = new OctreeNode(getBbox(galaxy));
         for (int i = 0; i < galaxy.getNbStar(); ++i)
         {
             Star3d *s = &galaxy[i];
