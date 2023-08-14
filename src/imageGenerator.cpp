@@ -13,7 +13,7 @@ using namespace std;
 void generateImage(Galaxy &g, int idx)
 {
     int imgWidth = 1900, imgHeight = 1900;
-    float boardWidth = 3, boardHeight = 3;
+    float boardWidth = 20, boardHeight = 20;
     string imgFolderPath = "./img";
 
     string img_path = imgFolderPath + "/sav_" + to_string(idx) + ".png";

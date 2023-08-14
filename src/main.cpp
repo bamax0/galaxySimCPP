@@ -11,7 +11,7 @@ void integrate(Galaxy &galaxy, const double &dt, const double &T, const double &
 {
     double softeningSquare = softening * softening;
     double dt_2 = dt / 2;
-    double expensionRate = 0.0384; // real 0.0384
+    double expensionRate = 0.0184; // real 0.0384
     int cpt = 0;
     Point3d *force = new Point3d();
 
